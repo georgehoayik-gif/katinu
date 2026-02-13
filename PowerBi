@@ -1,0 +1,113 @@
+import requests
+import pandas as pd
+import json
+
+def fetch_all_tickets():
+    """
+    Busca os chamados da API Milvus, tratando a paginação e erros, com limite de 1000 chamados.
+    """
+    # --- Configuração com Token Fixo ---
+    ## ATENÇÃO: Insira seu token diretamente na linha abaixo.
+    api_token = "hcgA3nI3zlN6fQBKefw1hmMIYwApofwlLMFdyHmHZcJ2beVpBRHe50dndw9JX0HO6f0EcmNTxzlckD3r9EpfvUqVPtdUXPpCLzt37" 
+
+    # Validação para garantir que o token foi inserido
+    if not api_token:
+        print("Erro: O token da API não foi fornecido.")
+        return None
+
+    base_url = "https://apiintegracao.milvus.com.br/api/chamado/listagem"
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': api_token
+    }
+    payload = json.dumps({
+        "filtro_body": {
+            "status": 4,
+        }
+    })
+    
+    all_tickets = []
+    current_page = 1
+    max_tickets = 1000  # Define o limite máximo de chamados
+    
+    print("Iniciando a busca de chamados...")
+
+    while True:
+        paginated_url = f"{base_url}?total_registros=50&pagina={current_page}"
+        
+        # --- Adiciona a verificação do limite antes de cada nova requisição ---
+        # Se a quantidade de chamados já for igual ou superior ao limite, sai do loop
+        if len(all_tickets) >= max_tickets:
+            print(f"Limite de {max_tickets} chamados atingido. Finalizando a busca.")
+            break
+        
+        try:
+            response = requests.post(paginated_url, headers=headers, data=payload, timeout=200)
+            response.raise_for_status()
+            
+            data = response.json()
+            
+            if 'lista' in data and data['lista']:
+                tickets_on_page = data['lista']
+                
+                # --- Garante que não ultrapasse o limite exato ---
+                remaining_slots = max_tickets - len(all_tickets)
+                if len(tickets_on_page) > remaining_slots:
+                    tickets_to_add = tickets_on_page[:remaining_slots]
+                    all_tickets.extend(tickets_to_add)
+                    print(f"Página {current_page} processada. {len(tickets_to_add)} chamados adicionados. Limite alcançado.")
+                    break  # Sai do loop após adicionar o restante
+                else:
+                    all_tickets.extend(tickets_on_page)
+                    print(f"Página {current_page} processada. {len(tickets_on_page)} chamados encontrados.")
+
+                # Verifica se a última página foi alcançada, caso o limite não tenha sido atingido
+                if len(tickets_on_page) < 500:
+                    print("Última página de resultados alcançada.")
+                    break
+                
+                current_page += 1
+            else:
+                print("Nenhum chamado encontrado nesta página. Finalizando a busca.")
+                break
+
+        except requests.exceptions.RequestException as e:
+            print(f"Erro de conexão com a API: {e}")
+            return None
+        except json.JSONDecodeError:
+            print(f"Erro: A resposta da API não é um JSON válido. Conteúdo: {response.text}")
+            return None
+
+    return all_tickets
+
+def main():
+    """
+    Função principal para executar o script.
+    """
+    tickets_data = fetch_all_tickets()
+    
+    if tickets_data:
+        df = pd.DataFrame(tickets_data)
+        print(f"\nTotal de {len(df)} chamados encontrados.")
+
+        columns_to_select = ["codigo", "cliente", "contato", "categoria_primaria", "categoria_secundaria", "tecnico", "total_horas", "data_criacao", "data_solucao", "servico_realizado"]
+        
+        available_columns = [col for col in columns_to_select if col in df.columns]
+        df_filtered = df[available_columns]
+        
+        if "data_criacao" in df_filtered.columns:
+            df_filtered["data_criacao"] = pd.to_datetime(df_filtered["data_criacao"])
+        if "data_solucao" in df_filtered.columns:
+            df_filtered["data_solucao"] = pd.to_datetime(df_filtered["data_solucao"])
+        
+        output_filename = "chamados_milvus.csv"
+        df_filtered.to_csv(output_filename, index=False, encoding='utf-8-sig')
+        print(f"\nDados salvos com sucesso no arquivo: '{output_filename}'")
+        
+        print("\nAmostra dos dados:")
+        print(df_filtered.head())
+    else:
+        print("\nNenhum dado foi processado devido a um erro anterior.")
+
+if __name__ == "__main__":
+    main()
