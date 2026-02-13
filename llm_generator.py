@@ -16,4 +16,4 @@ def gerar_resposta(prompt: str) -> str:
         return response['message']['content']
     except Exception as e:
         print(f"Erro ao se comunicar com o Ollama: {e}")
-        return "Desculpe, não consegui gerar uma resposta no momento."
+        return "Desculpe, não consegui gerar uma resposta no momento.teste"
