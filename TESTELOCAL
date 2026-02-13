@@ -1,0 +1,66 @@
+from langchain_community.document_loaders import DirectoryLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_ollama import OllamaEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain.chains import RetrievalQA
+from langchain_community.llms import Ollama
+import os
+
+# --- Configurações ---
+DATA_PATH = "D:/"  # Mude para o caminho da sua pasta de documentos
+MODELO_LLM = "llama3"  # Você pode usar outro modelo do Ollama, como "mistral"
+MODELO_EMBEDDING = "mxbai-embed-large"
+
+def criar_base_de_conhecimento():
+    """Carrega os documentos, divide o texto e cria o vetorizador."""
+    print("Carregando documentos...")
+    loader = DirectoryLoader(DATA_PATH, glob="**/*.pdf") # Exemplo com PDFs, pode ajustar para outros formatos
+    docs = loader.load()
+    
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    splits = text_splitter.split_documents(docs)
+    
+    print("Criando embeddings e base de vetores...")
+    embeddings = OllamaEmbeddings(model=MODELO_EMBEDDING)
+    vectorstore = FAISS.from_documents(documents=splits, embedding=embeddings)
+    
+    return vectorstore
+
+def criar_assistente(vectorstore):
+    """Cria a cadeia de IA para responder a perguntas."""
+    llm = Ollama(model=MODELO_LLM)
+    
+    retriever = vectorstore.as_retriever()
+    
+    qa_chain = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=retriever,
+    )
+    
+    return qa_chain
+
+# --- Execução Principal ---
+if __name__ == "__main__":
+    if not os.path.exists(DATA_PATH) or not os.listdir(DATA_PATH):
+        print(f"Erro: A pasta de documentos '{DATA_PATH}' não existe ou está vazia.")
+    else:
+        # Puxe os modelos necessários do Ollama
+        print(f"Puxando modelos '{MODELO_LLM}' e '{MODELO_EMBEDDING}' do Ollama...")
+        # Você pode rodar isso manualmente no terminal para ser mais seguro:
+        # ollama pull llama3
+        # ollama pull mxbai-embed-large
+
+        # Cria a base de conhecimento e o assistente
+        vectorstore = criar_base_de_conhecimento()
+        assistente = criar_assistente(vectorstore)
+        
+        # Loop para interagir com o assistente
+        while True:
+            pergunta = input("Faça uma pergunta sobre automação e impostos (ou 'sair' para terminar): ")
+            if pergunta.lower() == 'sair':
+                break
+            
+            resposta = assistente.run(pergunta)
+            print("\nResposta do Assistente:\n", resposta)
+            print("-" * 50)
