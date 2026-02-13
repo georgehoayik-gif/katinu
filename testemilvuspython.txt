@@ -1,0 +1,181 @@
+import requests
+import pandas as pd
+import json
+
+url = "https://apiintegracao.milvus.com.br/api/chamado/listagem"
+url += "?total_registros=1000"
+
+payload = json.dumps({
+    "filtro_body": {
+        "status": 4
+    }
+})
+
+headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'zayqrw9btEIxTtM26w0JjCWrW8GS4QsVXFkAePTm2unCU6DsTrmWUD7lOP94lxocEgXRZBdlxTmSPrkjM9vdCrFEytnsbZOQFxgK7'
+}
+
+try:
+    response = requests.post(url, headers=headers, data=payload)
+    response.raise_for_status()
+    data = response.json()
+except Exception as e:
+    print("Erro na requisição:", e)
+    exit()
+
+# 🔽 Confere se a API trouxe dados
+if 'lista' in data and len(data['lista']) > 0:
+
+    df = pd.DataFrame(data['lista'])
+
+    columns_to_select = [
+        "codigo",
+        "cliente",
+        "mesa_trabalho",
+
+    ]
+
+    # mantém só colunas que existirem
+    df = df[[col for col in columns_to_select if col in df.columns]]
+
+    # converter datas se existirem
+    if "data_criacao" in df.columns:
+        df["data_criacao"] = pd.to_datetime(df["data_criacao"], errors='coerce')
+
+    if "data_solucao" in df.columns:
+        df["data_solucao"] = pd.to_datetime(df["data_solucao"], errors='coerce')
+
+    df.to_excel(r"C:\Users\usuario\Desktop\relatorio_tickets.xlsx", index=False)
+
+    print("✅ Relatório gerado com sucesso!")
+
+else:
+    print("⚠️ API não retornou chamados:", data)
+
+
+
+
+_____________________________________________________________________________________________________________
+relatorio de total de atendimentos com media de horas e total clientes
+_____________________________________________________________________________________________________________
+
+import requests
+import pandas as pd
+import json
+
+# ==============================
+# 1️⃣ CONFIGURAÇÃO DA API
+# ==============================
+
+url = "https://apiintegracao.milvus.com.br/api/chamado/listagem?total_registros=1000"
+
+payload = json.dumps({
+    "filtro_body": {
+        "status": 4  # 4 = exemplo: fechados (ajuste se quiser)
+    }
+})
+
+headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'zayqrw9btEIxTtM26w0JjCWrW8GS4QsVXFkAePTm2unCU6DsTrmWUD7lOP94lxocEgXRZBdlxTmSPrkjM9vdCrFEytnsbZOQFxgK7'
+}
+
+# ==============================
+# 2️⃣ REQUISIÇÃO PARA A API
+# ==============================
+
+try:
+    response = requests.post(url, headers=headers, data=payload)
+    response.raise_for_status()
+    data = response.json()
+except Exception as e:
+    print("Erro na requisição:", e)
+    exit()
+
+# ==============================
+# 3️⃣ TRANSFORMAR JSON EM TABELA
+# ==============================
+
+if 'lista' in data and len(data['lista']) > 0:
+
+    df = pd.DataFrame(data['lista'])
+
+    # Colunas importantes
+    columns_to_select = [
+        "codigo",
+        "cliente",
+        "contato",
+        "categoria_primaria",
+        "categoria_secundaria",
+        "tecnico",
+        "total_horas",
+        "data_criacao",
+        "data_solucao",
+        "servico_realizado"
+    ]
+
+    # Mantém só as colunas que existirem
+    df = df[[col for col in columns_to_select if col in df.columns]]
+
+    # Converter datas
+    df["data_criacao"] = pd.to_datetime(df["data_criacao"], errors='coerce')
+    df["data_solucao"] = pd.to_datetime(df["data_solucao"], errors='coerce')
+
+else:
+    print("API não retornou dados:", data)
+    exit()
+
+# ==============================
+# 4️⃣ FILTRO POR PERÍODO
+# ==============================
+
+inicio = "2026-01-01"
+fim = "2026-01-31"
+
+df_periodo = df[
+    (df["data_criacao"] >= inicio) &
+    (df["data_criacao"] <= fim)
+]
+
+# ==============================
+# 5️⃣ MÉTRICAS
+# ==============================
+
+# Total de clientes únicos no período
+total_clientes = df_periodo["cliente"].nunique()
+
+# Chamados por cliente
+chamados_por_cliente = (
+    df_periodo.groupby("cliente")["codigo"]
+    .count()
+    .sort_values(ascending=False)
+)
+
+# Chamados por técnico
+chamados_por_tecnico = df.groupby("tecnico")["codigo"].count()
+
+# Tempo de atendimento (em horas)
+df["tempo_atendimento_horas"] = (
+    (df["data_solucao"] - df["data_criacao"]).dt.total_seconds() / 3600
+)
+
+tempo_medio = df["tempo_atendimento_horas"].mean()
+
+print(f"Total de clientes no período: {total_clientes}")
+print(f"Tempo médio de atendimento (h): {tempo_medio:.2f}")
+
+# ==============================
+# 6️⃣ EXPORTAR PARA EXCEL
+# ==============================
+
+caminho_arquivo = r"C:\Users\usuario\Desktop\relatorio_tickets.xlsx"
+
+with pd.ExcelWriter(caminho_arquivo) as writer:
+    df.to_excel(writer, sheet_name="Base Completa", index=False)
+    df_periodo.to_excel(writer, sheet_name="Periodo Filtrado", index=False)
+    chamados_por_cliente.to_excel(writer, sheet_name="Chamados por Cliente")
+    chamados_por_tecnico.to_excel(writer, sheet_name="Chamados por Técnico")
+
+print("✅ Relatório salvo na Área de Trabalho!")
+
