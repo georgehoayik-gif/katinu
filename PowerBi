@@ -111,3 +111,84 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+_______________________________________________________________________________________________________
+import requests
+import pandas as pd
+import json
+
+url = "https://apiintegracao.milvus.com.br/api/chamado/listagem"
+url += "?total_registros=5000"
+
+payload = json.dumps({
+    "filtro_body": {
+        "status": 4
+    }
+})
+
+headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'zayqrw9btEIxTtM26w0JjCWrW8GS4QsVXFkAePTm2unCU6DsTrmWUD7lOP94lxocEgXRZBdlxTmSPrkjM9vdCrFEytnsbZOQFxgK7'
+}
+
+try:
+    response = requests.post(url, headers=headers, data=payload)
+    response.raise_for_status()
+    data = response.json()
+except Exception as e:
+    print("Erro na requisição:", e)
+    exit()
+
+
+# 🔽 Confere se a API trouxe dados
+if 'lista' in data and len(data['lista']) > 0:
+
+    df = pd.DataFrame(data['lista'])
+
+    columns_to_select = [
+        "codigo",
+        "cliente",
+        "contato",
+        "categoria_primaria",
+        "categoria_secundaria",
+        "tecnico",
+        "total_horas",
+        "data_criacao",
+        "servico_realizado",
+        "mesa_trabalho"
+    ]
+
+    # mantém só colunas que existirem
+    df = df[[col for col in columns_to_select if col in df.columns]]
+   # Exibe resultado
+    print("\n=== RESULTADO ===\n")
+
+    # Mostra todas as linhas
+    print(df.to_string(index=False))
+
+    print("\nTotal de registros:", len(df))
+
+else:
+    print("Nenhum dado retornado pela API.")
+
+
+
+columns_to_select = [
+    "codigo",
+    "cliente",
+    "contato",
+    "categoria_primaria",
+    "categoria_secundaria",
+    "tecnico",
+    "total_horas",
+    "data_criacao",
+
+    "servico_realizado",
+    "mesa_trabalho"
+]
+
+df = df[[col for col in columns_to_select if col in df.columns]]
+
+print(df.to_string(index=False))

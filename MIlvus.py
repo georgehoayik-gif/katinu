@@ -30,11 +30,11 @@ data = response.json()
 if "lista" not in data:
     print("Resposta inesperada:", data)
     exit()
-
 # ==============================
 # 📊 TRANSFORMA EM DATAFRAME
 # ==============================
 df = pd.DataFrame(data["lista"])
+df["nome_mesa"].unique()
 
 # Extrair nome da mesa (vem como objeto JSON)
 df["mesa_trabalho"] = df["mesa_trabalho"].apply(

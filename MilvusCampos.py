@@ -10,7 +10,7 @@ import json
 
 # Define a URL da API
 # total_registros=1 significa que queremos apenas 1 chamado
-url = "https://apiintegracao.milvus.com.br/api/chamado/listagem"
+url = "https://apiintegracao.milvus.com.br/api/relatorio-atendimento/listagem"
 
 
 # Define os cabeçalhos (headers) da requisição
