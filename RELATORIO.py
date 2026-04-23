@@ -6,7 +6,14 @@ import json
 from datetime import datetime, timedelta
 from PIL import Image, ImageDraw, ImageFont
 import os
+import plotly.io as pio
 
+try:
+    pio.kaleido.scope.chromium_executable
+except:
+    import os
+    os.system("plotly_get_chrome")
+    
 st.set_page_config(layout="wide")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ARQUIVO_CONTROLE = os.path.join(BASE_DIR, "ultimo_envio.txt")
