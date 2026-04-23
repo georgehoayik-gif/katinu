@@ -110,20 +110,18 @@ def carregar_ou_buscar(nome_tabela, func_busca, *args):
     """
     chave = f"{nome_tabela}_{hash(str(args))}"
     # 🔑 CRIA CHAVE ÚNICA BASEADA NOS PARÂMETROS
-    def gerar_chave(nome, pagina, parametros):
-        return f"{nome}_p{pagina}_{hash(str(parametros))}"
+    def gerar_chave(tabela, pagina, parametros):
+        return f"{tabela}_p{pagina}_{hash(str(parametros))}"
 
-    def carregar_pagina_cache(nome, pagina, *args):
-        chave = gerar_chave(nome, pagina, *args)
-        return carregar_do_banco(chave)
+    def carregar_pagina_cache(tabela, pagina, parametros):
+        chave = gerar_chave(tabela, pagina, parametros)
+        return carregar_do_banco(chave), chave
 
-    def salvar_pagina_cache(df, nome, pagina, *args):
-        chave = gerar_chave(nome, pagina, *args)
+    def salvar_pagina_cache(df, chave):
         salvar_no_banco(df, chave)
-
-    if banco_expirado(30):
-        df = func_busca(*args)
-        salvar_no_banco(df, chave)
+        if banco_expirado(30):
+            df = func_busca(*args)
+            salvar_no_banco(df, chave)
         return df
 
     df = carregar_do_banco(chave)
@@ -300,7 +298,7 @@ def buscar_whatsapp(qtd_paginas, data_inicio, data_fim):
 
         # =========================================
         # 🚀 CACHE POR PÁGINA
-        # =========================================tabela
+        # =========================================salvar_pagina_cache
         chave = carregar_pagina_cache(
             "whatsapp",
             pagina,
