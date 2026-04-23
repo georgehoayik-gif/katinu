@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: katinu
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      apt-get update
+      apt-get install -y chromium-browser
+    startCommand: streamlit run RELATORIO.py --server.port $PORT --server.address 0.0.0.0
