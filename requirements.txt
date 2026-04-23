@@ -1,4 +1,14 @@
-fastapi
-uvicorn
-requests
+streamlit
 pandas
+requests
+plotly
+pillow
+openpyxl
+streamlit-autorefresh
+kaleido
+streamlit
+plotly
+pillow
+openpyxl
+streamlit-autorefresh
+kaleido
