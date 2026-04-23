@@ -11,12 +11,10 @@ import time
 # =========================================
 # 💾 CACHE LOCAL SQLITE (MINI BANCO)
 # ========================================= to_sql
-import sqlite3
 
-DB_PATH = "cache_milvus.db"
 import sqlite3
-
-DB_PATH = "cache_milvus.db"
+st.write("App iniciado com sucesso ??")
+DB_PATH = "/tmp/cache_milvus.db"
 
 # =========================================
 # 🚀 CACHE POR PÁGINA (NÍVEL HARDCORE)
@@ -90,7 +88,7 @@ def carregar_do_banco(tabela):
     conn.close()
     return df
 
-# -------------------------------
+# -------------------------------ultimo_envio
 # 🔹 CONTROLE DE EXPIRAÇÃO
 # -------------------------------
 def banco_expirado(minutos=30):
@@ -138,9 +136,14 @@ def carregar_ou_buscar(nome_tabela, func_busca, *args):
 
 st.set_page_config(layout="wide")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ARQUIVO_CONTROLE = os.path.join(BASE_DIR, "ultimo_envio.txt")
+ARQUIVO_CONTROLE = "ultimo_envio.txt"
 
 def ja_enviou_hoje():
+
+    if not os.path.exists(ARQUIVO_CONTROLE):
+        with open(ARQUIVO_CONTROLE, "w") as f:
+            f.write("")
+
     if not os.path.exists(ARQUIVO_CONTROLE):
         return False
 
@@ -157,7 +160,7 @@ def salvar_envio():
 
     with open(ARQUIVO_CONTROLE, "w") as f:
         f.write(hoje)
-# ============================== gerar_chave
+# ============================== ImageFont
 # CONFIG API 
 # ==============================
 BASE_URL = "https://apiintegracao.milvus.com.br/api/chamado/listagem"
@@ -1020,6 +1023,7 @@ def gerar_imagem_unica(figs, data_inicio, data_fim, total_tickets):
     try:
         fonte = ImageFont.truetype("arial.ttf", 40)
     except:
+        
         fonte = ImageFont.load_default()
 
     draw.text((20, 30), texto, fill="black", font=fonte)
@@ -1032,7 +1036,7 @@ def gerar_imagem_unica(figs, data_inicio, data_fim, total_tickets):
 
     return caminho
 
-# ==============================
+# ==============================cache_milvus
 # ENVIAR DISCORD
 # ==============================
 
