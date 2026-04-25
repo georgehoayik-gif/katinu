@@ -7,13 +7,12 @@ from datetime import datetime, timedelta
 from PIL import Image, ImageDraw, ImageFont
 import os
 import plotly.io as pio
+import shutil
 
-try:
-    pio.kaleido.scope.chromium_executable
-except:
+if not shutil.which("google-chrome"):
     import os
     os.system("plotly_get_chrome")
-    
+
 st.set_page_config(layout="wide")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ARQUIVO_CONTROLE = os.path.join(BASE_DIR, "ultimo_envio.txt")
@@ -35,7 +34,7 @@ def salvar_envio():
 
     with open(ARQUIVO_CONTROLE, "w") as f:
         f.write(hoje)
-# ==============================
+# ==============================fig.write_image(...)
 # CONFIG API 
 # ==============================
 BASE_URL = "https://apiintegracao.milvus.com.br/api/chamado/listagem"
@@ -49,7 +48,7 @@ headers = {
 # ==============================
 # CONFIG DISCORD
 # ==============================
-WEBHOOK_URL = "https://discord.com/api/webhooks/1479836272682860775/RXaAPySorhZ-B2OedENyDwZhKs8j6Ua6XKpfEQFPtcKQYcTci-MYsjnTcqVWL4cbcqfp"
+WEBHOOK_URL = "https://discord.com/api/webhooks/1480567192859705537/jMFT7DKm2ShNEjXSZCeULjgMpq-owh__PNIUSjR9Ezpfeh2SZEDfc-wwzyqQG1RIlfCa"
 
 # ==============================
 # ⚡ CONTROLE DE PAGINAÇÃO
